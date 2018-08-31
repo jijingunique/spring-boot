@@ -35,6 +35,7 @@ public abstract class ExecutableArchiveLauncher extends Launcher {
 
 	public ExecutableArchiveLauncher() {
 		try {
+			//找到自己所在的jar，并创建Archive
 			this.archive = createArchive();
 		}
 		catch (Exception ex) {

@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
  * @author Andy Wilkinson
  */
 public class MainMethodRunner {
-
+	// Start-Class in MANIFEST.MF
 	private final String mainClassName;
 
 	private final String[] args;
@@ -42,9 +42,12 @@ public class MainMethodRunner {
 	}
 
 	public void run() throws Exception {
+		// 加载应用程序主入口类
 		Class<?> mainClass = Thread.currentThread().getContextClassLoader()
 				.loadClass(this.mainClassName);
+		//找到main方法
 		Method mainMethod = mainClass.getDeclaredMethod("main", String[].class);
+		//启动main方法
 		mainMethod.invoke(null, new Object[] { this.args });
 	}
 

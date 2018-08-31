@@ -267,14 +267,26 @@ public class SpringApplication {
 	public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
+		// 把sources设置到SpringApplication的sources属性中，目前只是一个MyApplication类对象
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 判断是否是web程序(javax.servlet.Servlet和org.springframework.web.context.ConfigurableWebApplicationContext都必须在类加载器中存在)，并设置到webApplicationType属性中
 		this.webApplicationType = deduceWebApplicationType();
+		//从spring.factories文件中找出key为ApplicationContextInitializer的类并实例化后设置到SpringApplication的initializers属性中。这个过程也就是找出所有的应用程序初始化器
 		setInitializers((Collection) getSpringFactoriesInstances(
 				ApplicationContextInitializer.class));
+		// 从spring.factories文件中找出key为ApplicationListener的类并实例化后设置到SpringApplication的listeners属性中。这个过程就是找出所有的应用程序事件监听器
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+		//设置main类,应用的入口类
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
+	/**
+	 * 三种类型
+	 * WebApplicationType.SERVLET
+	 * WebApplicationType.NONE
+	 * WebApplicationType.REACTIVE
+	 * @return
+	 */
 	private WebApplicationType deduceWebApplicationType() {
 		if (ClassUtils.isPresent(REACTIVE_WEB_ENVIRONMENT_CLASS, null)
 				&& !ClassUtils.isPresent(MVC_WEB_ENVIRONMENT_CLASS, null)
@@ -311,33 +323,46 @@ public class SpringApplication {
 	 * @return a running {@link ApplicationContext}
 	 */
 	public ConfigurableApplicationContext run(String... args) {
-		StopWatch stopWatch = new StopWatch();
-		stopWatch.start();
+		StopWatch stopWatch = new StopWatch();// 构造一个任务执行观察器
+		stopWatch.start();// 开始执行，记录开始时间
 		ConfigurableApplicationContext context = null;
 		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
 		configureHeadlessProperty();
+		// 获取SpringApplicationRunListeners，内部只有一个EventPublishingRunListener
 		SpringApplicationRunListeners listeners = getRunListeners(args);
+		// 上面分析过，会封装成SpringApplicationEvent事件然后广播出去给SpringApplication中的listeners所监听
+		// 这里接受ApplicationStartedEvent事件的listener会执行相应的操作
 		listeners.starting();
 		try {
+			// 构造一个应用程序参数持有类
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(
 					args);
+			//环境参数类
 			ConfigurableEnvironment environment = prepareEnvironment(listeners,
 					applicationArguments);
 			configureIgnoreBeanInfo(environment);
+			//打印banner
 			Banner printedBanner = printBanner(environment);
+			//创建应用上下文
 			context = createApplicationContext();
+			//创建SpringBootExceptionReporter
 			exceptionReporters = getSpringFactoriesInstances(
 					SpringBootExceptionReporter.class,
 					new Class[] { ConfigurableApplicationContext.class }, context);
+			//准备上下文
 			prepareContext(context, environment, listeners, applicationArguments,
 					printedBanner);
+			//刷新上下文
 			refreshContext(context);
+			//刷新后的其他操作
 			afterRefresh(context, applicationArguments);
+			//结束执行，记录结束时间
 			stopWatch.stop();
 			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass)
 						.logStarted(getApplicationLog(), stopWatch);
 			}
+			//开始监听
 			listeners.started(context);
 			callRunners(context, applicationArguments);
 		}

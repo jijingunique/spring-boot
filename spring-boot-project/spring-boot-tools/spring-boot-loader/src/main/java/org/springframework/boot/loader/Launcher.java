@@ -46,7 +46,9 @@ public abstract class Launcher {
 	 */
 	protected void launch(String[] args) throws Exception {
 		JarFile.registerUrlProtocolHandler();
+		//创建自定义的ClassLoader
 		ClassLoader classLoader = createClassLoader(getClassPathArchives());
+		//加载
 		launch(args, getMainClass(), classLoader);
 	}
 
@@ -83,7 +85,9 @@ public abstract class Launcher {
 	 */
 	protected void launch(String[] args, String mainClass, ClassLoader classLoader)
 			throws Exception {
+		// 将自定义ClassLoader设置为当前线程上下文类加载器
 		Thread.currentThread().setContextClassLoader(classLoader);
+		//启动应用
 		createMainMethodRunner(mainClass, args, classLoader).run();
 	}
 
